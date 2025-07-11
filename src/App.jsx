@@ -2,59 +2,92 @@ import { useState } from 'react'
 import './App.css'
 
 function App() {
+  const [data, setData] = useState([])
+  const [input, setInput] = useState("")
+  const [editId, setEditId] = useState(null)
 
-const [data , setData]=useState([])
-const [input,setInput]=useState("")
-
-const addTodo=(e)=>{
+  const addOrUpdateTodo = (e) => {
     e.preventDefault();
-    if(input.trim()==="")return alert("no spaces allowed");
 
-    const newData = {
-      id:Date.now(),
-      text:input,
-      completed:false,
-    };
-    setData([...data,newData])
+    if (input.trim() === "") return alert("No spaces allowed");
+
+    if (editId) {
+      // update existing todo
+      setData(
+        data.map((item) =>
+          item.id === editId ? { ...item, text: input } : item
+        )
+      );
+      setEditId(null)
+    } else {
+      // add new todo
+      const newData = {
+        id: Date.now(),
+        text: input,
+        completed: false,
+      };
+      setData([...data, newData])
+    }
+
     setInput("")
+  }
 
-};
+  const toggle = (id) => {
+    setData(
+      data.map(item =>
+        item.id === id ? { ...item, completed: !item.completed } : item
+      )
+    )
+  }
 
-const Toggle=(id)=>{
-    setData(data.map(item=>{
-      return item.id === id ?{...item, completed: !item.completed}:item
-    }))
-}
+  const deleteData = (id) => {
+    setData(data.filter((item) => item.id !== id))
 
-const deleteData=(id)=>{
-  setData(data.filter((data)=>{
-    return  data.id !== id
-  }))
-}
+    // If you delete the task that's being edited, cancel editing
+    if (editId === id) {
+      setEditId(null)
+      setInput("")
+    }
+  }
+
+  const editTodo = (item) => {
+    setEditId(item.id)
+    setInput(item.text)
+  }
+
   return (
     <>
-     <div className='app'>
-      <h1>TODO</h1>
-      <form onSubmit={addTodo}>
-        <input type='text' placeholder='add task' value={input} onChange={(e)=>setInput(e.target.value)}/>
-        <button type='submit'>Add</button>
-      </form>
+      <div className='app'>
+        <h1>TODO</h1>
+        <form onSubmit={addOrUpdateTodo}>
+          <input
+            type='text'
+            placeholder='Add or edit task'
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+          />
+          <button type='submit'>{editId ? "Update" : "Add"}</button>
+        </form>
 
-      {data.length===0 ? (
-        <p>No task avilable</p>
-      ): (
-        data.map((data)=>{
-          return(
-          <div className='todo-item' key={data.id}>
-            <input type='checkbox' checked={data.completed} onChange={()=>Toggle(data.id)} />
-            <span className={data.completed ? "completed" : " "}>{data.text}</span>
-            <button onClick={()=>deleteData(data.id)}>🗑️</button>
-          </div>
-
-        )})
-      )}
-
-     </div>
+        {data.length === 0 ? (
+          <p>No task available</p>
+        ) : (
+          data.map((item) => (
+            <div className='todo-item' key={item.id}>
+              <input
+                type='checkbox'
+                checked={item.completed}
+                onChange={() => toggle(item.id)}
+              />
+              <span className={item.completed ? "completed" : ""}>
+                {item.text}
+              </span>
+              <button onClick={() => editTodo(item)}>✏️</button>
+              <button onClick={() => deleteData(item.id)}>🗑️</button>
+            </div>
+          ))
+        )}
+      </div>
     </>
   )
 }
